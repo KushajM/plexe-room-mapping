@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Compare room mapping systems</title>
-<link rel="stylesheet" href="../assets/site.css?v=20260927135449">
+<link rel="stylesheet" href="../assets/site.css?v=20260927142207">
 <style>
 .sys-card{border-top:4px solid var(--c)}.sys-card .big{color:var(--c)}
 .metric{margin:8px 0}.metric b{font-size:22px;font-variant-numeric:tabular-nums}
@@ -43,9 +43,6 @@ details.wrong summary{font-weight:600}
     <h2>All names, with the fallback</h2>
     <p class="small muted" id="frame-ii"></p>
     <div class="tablewrap"><table id="summary-ii" aria-label="Results on all names"></table></div>
-    <h2>Names all three systems placed</h2>
-    <p class="small muted" id="frame-i"></p>
-    <div class="tablewrap"><table id="summary-i" aria-label="Results on shared names"></table></div>
     <p class="small"><b id="f05note"></b></p>
     <h2>Rows shown</h2>
     <div class="tablewrap"><table id="rows"></table></div>
@@ -58,7 +55,7 @@ details.wrong summary{font-weight:600}
   </main>
   <footer>Research preview by Plexe. Vervotech and Plexe v2 (v3ak) outputs are shown as each system returned them. Not an official hotel listing.</footer>
 </div>
-<script src="../assets/common.js?v=20260927135449"></script>
+<script src="../assets/common.js?v=20260927142207"></script>
 <script>
 const COLOR = {vervotech: "var(--sys-vervotech)", v3ak: "var(--sys-v3ak)", mapper: "var(--sys-mapper)", reference: "var(--sys-reference)"};
 const SHORT = {vervotech: "Vervotech", v3ak: "Plexe v2 (v3ak)", mapper: "Plexe mapper", reference: "Hotel's own rooms"};
@@ -81,8 +78,7 @@ const ci1 = x => `95% CI ${x.lo.toFixed(1)} to ${x.hi.toFixed(1)}`;
 function summary() {
   $("mappernote").textContent = INDEX.mapper_note;
   table("summary-ii", INDEX.summary_ii, INDEX.verdict_ii, true);
-  table("summary-i", INDEX.summary_i, INDEX.verdict_i, false);
-  $("frame-i").textContent = INDEX.frame_i; $("frame-ii").textContent = INDEX.frame_ii;
+  $("frame-ii").textContent = INDEX.frame_ii;
   $("f05note").textContent = INDEX.f05_note;
   const R = INDEX.rows, pr = R.published_rooms;
   $("rows").innerHTML = `<tr><th>System</th><th>Rows per hotel</th><th>Rows per room on the hotel's website</th></tr>` +
