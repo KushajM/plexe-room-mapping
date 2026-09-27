@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -63,8 +63,7 @@ code{background:#f3ede6;padding:1px 5px;border-radius:4px;font-size:13px}
     <div class="chart" id="h-rooms"></div>
     <div class="chart" id="h-providers"></div>
     <h3>Split sizes by stratum</h3>
-    <p>The dev and test halves were drawn once, with a fixed seed, within strata of traffic rank and gold density, so neither half gets most of the
-      traffic or most of the evidence. The test half is sealed: it is not scored and not published.</p>
+    <p id="split-text"></p>
     <div class="tablewrap"><table id="strata"></table></div>
 
     <h2 id="human">Human validation</h2>
@@ -72,14 +71,15 @@ code{background:#f3ede6;padding:1px 5px;border-radius:4px;font-size:13px}
     <div class="cards hv" id="human-body"></div>
 
     <h2 id="results">Baselines and results</h2>
-    <p>All on the 477 public DEV hotels, counted over labelled listing pairs, with 95% confidence intervals from resampling hotels.</p>
+    <p id="baselines-intro"></p>
     <div class="tablewrap"><table id="baselines"></table></div>
+    <p class="small"><b id="f05note"></b></p>
     <p class="small muted">Scores are counted per supplier name, so identical names already share a row; that is why "Identical names together"
       scores the same as "Every name its own row".</p>
-    <div class="note"><b>Why the trivial token-set baseline wins here.</b> Same-room pairs in this gold exist only when both names have exactly the
-      words of one published room, so two names with the same set of words are always the same room by construction. Grouping by word set therefore
-      never misses a match this gold can see. The gold cannot see the hard cases (differently worded names for one room), so a low missed-match
-      number here is a floor, not a verdict.</div>
+    <div class="note"><b>Why the trivial token-set baseline scores near-perfect.</b> v5.1 gold only checks names worded the same as the hotel's
+      own room list: a same-room pair exists only when both names have exactly the words of one published room. Two names with the same set of
+      words are therefore always the same room by construction, so grouping by word set never misses a match this gold can see. The gold cannot see
+      differently worded names for one room, so a low missed-match number here is a floor, not a verdict.</div>
 
     <h2 id="internal">The internal evaluation set (aggregates only)</h2>
     <div id="internal-body"></div>
@@ -96,13 +96,17 @@ code{background:#f3ede6;padding:1px 5px;border-radius:4px;font-size:13px}
 
     <h2 id="changelog">Changelog</h2>
     <ul>
+      <li id="resplit-entry"></li>
       <li><b>v5.1</b> (2026-09-26): every hotel of the internal evaluation set removed, and the build now refuses to read it. Surviving pairs are byte-identical to v5.0.</li>
       <li><b>v5</b> (2026-09-24): identity gold rebuilt from hotels' own websites on the panel frame; fresh sealed dev/test draw (seed 20260924).</li>
       <li><b>v2.0</b>: retired ("burned"). Its test half was scored twice, and 3,200 of its gold rows are in another repository, so its test numbers can no longer be trusted.</li>
     </ul>
 
+    <div class="tablewrap" style="margin-top:10px"><table id="mde"></table></div>
+    <p class="small muted" id="mde-note"></p>
+
     <h2 id="download">Download</h2>
-    <p>Public v5.1 DEV files only. The sealed test half and the internal set are not released.</p>
+    <p>Public v5.1 files only. The sealed test and the internal set are not released.</p>
     <ul id="download-body"></ul>
   </main>
   <footer>Research preview by Plexe. Licence: research use; room names belong to the hotels and suppliers that publish them.</footer>
@@ -126,7 +130,7 @@ code{background:#f3ede6;padding:1px 5px;border-radius:4px;font-size:13px}
     ["Preprocessing", `Names are lowercased and whitespace-collapsed; rate-plan words are kept in the released name. ${pct(c.listing_map_rate, 1)} of listings in catalogued hotels could be placed on a published room by the exact-words rule; the rest stay unlabelled.`],
     ["Labelling", "An exact-words rule places listings on published rooms, with vetoes for ambiguity. 59 pairs were adjudicated blind by a person. No production grouping is ever used to make a label."],
     ["Uses", "Measuring wrong merges and easy missed matches of a room mapper. Not suitable for measuring hard missed matches (differently worded names)."],
-    ["Distribution", "CSV files below, public DEV half only. The sealed test half stays private so that no one, including us, can tune to it."],
+    ["Distribution", `CSV files below, public set only (${fmt(D.resplit.n_public)} hotels). A sealed test of ${D.resplit.n_test} hotels stays private so that no one, including us, can tune to it.`],
     ["Maintenance", "Versioned (see Changelog). Errors can be reported to Plexe; fixes ship as a new version, never as silent edits."]];
   $("datasheet-body").innerHTML = ds.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("");
   $("files-body").innerHTML = Object.entries(D.files).map(([fn, f]) => `<h3>${esc(fn)} <span class="muted small">${fmt(f.rows)} rows x ${f.columns} columns · ${(f.bytes / 1e6).toFixed(1)} MB</span></h3>
@@ -137,13 +141,24 @@ code{background:#f3ede6;padding:1px 5px;border-radius:4px;font-size:13px}
   $("h-names").innerHTML = barChart(D.hists.names, {x: "Supplier room names per hotel", y: "Hotels"});
   $("h-rooms").innerHTML = barChart(D.hists.rooms, {x: "Rooms on the hotel's own website", y: "Hotels", color: "#47745e"});
   $("h-providers").innerHTML = barChart(D.hists.providers, {x: "Suppliers selling the hotel", y: "Hotels", color: "#4f76ad"});
-  $("strata").innerHTML = `<tr><th>Traffic rank</th><th>Gold density</th><th>Dev hotels</th><th>Test hotels (sealed)</th></tr>` + D.strata.map(s => `<tr><td>${esc(s.band)}</td><td>${esc(s.density)}</td><td class="num">${s.dev}</td><td class="num">${s.test}</td></tr>`).join("");
+  const R = D.resplit;
+  $("split-text").textContent = `The sealed test of ${R.n_test} hotels was drawn once by salted hash from the ${R.pool} hotels that had never been scored or published, within strata of traffic and listing count (terciles), so neither side gets most of the traffic or most of the evidence. Every other hotel (${fmt(R.n_public)}) is public. The sealed test is not scored and not published.`;
+  $("strata").innerHTML = `<tr><th>Traffic tercile</th><th>Listing-count tercile</th><th>Hotels eligible</th><th>Sealed test</th></tr>` + D.strata.map(s => `<tr><td>${esc(s.traffic)}</td><td>${esc(s.listings)}</td><td class="num">${s.pool}</td><td class="num">${s.test}</td></tr>`).join("");
   $("human-body").innerHTML = D.human.map(h => `<div class="card"><h3>${esc(h.name)}</h3><div class="big num">${h.k} of ${h.n}</div><div class="ci">${pct(h.rate, 0)} · ${ci(h.lo, h.hi, 0)}</div><p class="small">${esc(h.detail)}</p><p class="small"><b>Plain reading.</b> ${esc(h.reading)}</p></div>`).join("");
-  const NAMES = {all_singletons: "Every name its own row", all_one_row: "Everything in one row", exact_name: "Identical names together", token_set: "Same set of words together (degenerate)", production: "Plexe production (Jul to Aug 2026)", mapper: "Plexe mapper (production + safety layer + price guard)"};
-  const cell = x => `<b class="num">${pct(x.rate, 2)}</b><br><span class="ci">n = ${fmt(x.den)} · ${ci(x.lo, x.hi, 2)}</span>`;
-  $("baselines").innerHTML = `<tr><th>System</th><th>${tip("Wrong merges", "Different-room pairs shown in one row.")}</th><th>${tip("Missed matches, all", "Same-room pairs shown in separate rows.")}</th><th>${tip("Missed matches, differently written", "Same-room pairs whose names differ, shown in separate rows.")}</th></tr>` +
-    Object.entries(D.baselines).map(([k, b]) => `<tr><td>${esc(NAMES[k])}</td><td>${cell(b.merge)}</td><td>${cell(b.split)}</td><td>${cell(b.dsplit)}</td></tr>`).join("");
-  const I = D.internal;
+  const NAMES = {production: "Plexe production (Jul to Aug 2026)", mapper: "Plexe mapper (production + safety layer + price guard)", token_set: "Same set of words together (degenerate)", exact_name: "Identical names together (degenerate)", all_singletons: "Every name its own row (degenerate)", all_one_row: "One group per hotel (degenerate)"};
+  const ORDER = ["missed", "merges", "coverage", "missell", "f05"];
+  const cell = (m, x) => { if (x.rate == null) return `<span class="muted">n/a</span><br><span class="ci">no rows to judge</span>`;
+    if (m === "f05") return `<b class="num">${x.rate.toFixed(3)}</b><br><span class="ci">n = ${x.hotels} hotels, ${fmt(x.names)} names · 95% CI ${x.lo.toFixed(3)} to ${x.hi.toFixed(3)}</span><br><span class="ci">${tip("pooled " + x.pooled.toFixed(3), "Pooled over names instead of averaged per hotel; 95% CI " + x.pooled_lo.toFixed(3) + " to " + x.pooled_hi.toFixed(3))}</span>`;
+    const d = m === "merges" ? 2 : 1, unit = m === "coverage" ? "names" : m === "missell" ? "rows" : "pairs";
+    return `<b class="num">${pct(x.rate, d)}</b><br><span class="ci">n = ${fmt(x.den)} ${unit}, ${x.hotels} hotels · ${ci(x.lo, x.hi, d)}</span>`; };
+  $("baselines-intro").textContent = `All on the ${fmt(c.dev_hotels)} public hotels, with 95% confidence intervals from resampling hotels. Vervotech and Plexe v2 (v3ak) outputs exist only for the 44 comparison hotels; see Compare.`;
+  $("baselines").innerHTML = `<tr><th>System</th>${ORDER.map(m => `<th>${tip(D.labels[m], D.help[m])}</th>`).join("")}</tr>` +
+    Object.entries(D.baselines).map(([k, b]) => `<tr><td>${esc(NAMES[k])}</td>${ORDER.map(m => `<td>${cell(m, b[m])}</td>`).join("")}</tr>`).join("");
+  $("f05note").textContent = D.f05_note;
+  $("resplit-entry").innerHTML = `<b>v5.1 re-split</b> (2026-09-27): the sealed test is now ${R.n_test} hotels, drawn by salted hash from the ${R.pool} hotels that had never been scored or published (stratified by traffic and listing count); every other hotel, ${fmt(R.n_public)} in all, is public. The old test half was confirmed never scored; 20 of its hotels had been shown in an earlier public comparison, so they were made public rather than sealed. Test-id fingerprint (SHA-256): <code>${esc(R.test_ids_sha256.slice(0, 16))}...</code>. The smaller sealed test detects smaller effects less well:`;
+  $("mde").innerHTML = `<tr><th>Sealed hotels</th><th>Smallest detectable difference, missed matches (unpaired / paired)</th><th>Smallest detectable difference, wrong merges (unpaired / paired)</th></tr>` +
+    R.mde.map(r => `<tr${r.sealed_hotels === R.n_test ? ' style="font-weight:650"' : ""}><td class="num">${r.sealed_hotels}</td><td class="num">${(100 * r.missed.unpaired).toFixed(1)} / ${(100 * r.missed["paired_rho_0.8"]).toFixed(1)} pts</td><td class="num">${(100 * r.wrong_merges.unpaired).toFixed(1)} / ${(100 * r.wrong_merges["paired_rho_0.8"]).toFixed(1)} pts</td></tr>`).join("");
+  $("mde-note").textContent = `80% power, two-sided 5% test, from the per-hotel spread measured on the earlier public half (${R.sd}); paired assumes a 0.8 correlation between two systems on the same hotels.`;  const I = D.internal;
   $("internal-body").innerHTML = `<p>${esc(I.note)}</p><div class="cards">
     <div class="card"><h3>Size</h3><div class="big num">${fmt(I.hotels)}</div><div class="ci">hotels · ${fmt(I.supplier_names)} supplier names · ${I.cities} cities</div></div>
     <div class="card"><h3>Evaluation split</h3><div class="big num">${fmt(I.splits["sealed evaluation split"].dev)}</div><div class="ci">dev hotels · ${fmt(I.splits["sealed evaluation split"]["test (sealed)"])} test hotels sealed</div></div>

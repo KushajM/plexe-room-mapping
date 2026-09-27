@@ -7,7 +7,7 @@
 <title>Plexe mapper: one row per real room</title>
 <link rel="stylesheet" href="../assets/site.css">
 <style>
-.results .big{color:var(--sys-mapper)}
+.results .big{color:var(--sys-mapper)}.results{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.results .big{font-size:26px}
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}
 .step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
 .step b{display:inline-flex;width:26px;height:26px;border-radius:50%;background:var(--orange-soft);color:var(--orange-dark);align-items:center;justify-content:center;margin-right:8px}
@@ -64,14 +64,21 @@ const BADGE = {exact: ["b-exact", "exact", "The name matches one of the hotel's 
   clear: ["b-clear", "clear", "Only one room type fits what the name states, or the deciding words are quoted from the name."],
   split: ["b-split", "split for safety", "Split off its production group because its wording points to a different room type."],
   guard: ["b-guard", "price guard", "The name does not state its grade; the price guard decided which grade it sits in."]};
+const ORDER = ["missed", "merges", "coverage", "missell", "f05"];
+function metricValue(m, x) {
+  if (m === "f05") return {v: x.rate == null ? "n/a" : x.rate.toFixed(3), n: `n = ${fmt(x.hotels)} hotels, ${fmt(x.names)} names`, c: x.lo == null ? "" : `95% CI ${x.lo.toFixed(3)} to ${x.hi.toFixed(3)}`,
+    tipx: ` Pooled over names: ${x.pooled == null ? "n/a" : x.pooled.toFixed(3)} (95% CI ${x.pooled_lo == null ? "n/a" : x.pooled_lo.toFixed(3) + " to " + x.pooled_hi.toFixed(3)}).`};
+  const d = m === "merges" ? 2 : 1, unit = m === "coverage" ? "names" : m === "missell" ? "rows" : "pairs";
+  return {v: pct(x.rate, d), n: `n = ${fmt(x.den)} ${unit}, ${fmt(x.hotels)} hotels`, c: ci(x.lo, x.hi, d), tipx: ""};
+}
 function results() {
   const r = INDEX.results, hu = INDEX.human.split_confirmed;
-  $("results").innerHTML = [
-    `<div class="card"><h3>${tip("Checked by a person", INDEX.human.frame + ". Controls: " + INDEX.human.controls.k + " of " + INDEX.human.controls.n + " confirmed as the same room.")}</h3><div class="big num">${pct(hu.rate, 0)}</div><div class="ci">${hu.k} of ${hu.n} split groupings confirmed as different rooms · ${ci(hu.lo, hu.hi, 0)}</div></div>`,
-    `<div class="card"><h3>${tip("Wrong merges", "Share of listing pairs from different rooms (by the hotel's own website) that end up in one row.")}</h3><div class="big num">${pct(r.merge.mapper.rate, 2)}</div><div class="ci">n = ${fmt(r.merge.mapper.den)} pairs, ${r.merge.mapper.hotels} hotels · ${ci(r.merge.mapper.lo, r.merge.mapper.hi, 2)}</div></div>`,
-    `<div class="card"><h3>${tip("Missed matches, differently worded names", "Share of listing pairs of the same room, with differently worded names, shown in separate rows.")}</h3><div class="big num">${pct(r.dsplit.mapper.rate, 1)}</div><div class="ci">n = ${fmt(r.dsplit.mapper.den)} pairs, ${r.dsplit.mapper.hotels} hotels · ${ci(r.dsplit.mapper.lo, r.dsplit.mapper.hi, 1)}</div></div>`].join("");
-  const d = m => `${signed(r[m].diff.diff, 2)} (${ci(r[m].diff.lo, r[m].diff.hi, 2)})${r[m].distinguishable ? "" : ", not distinguishable from zero"}`;
-  $("frame").innerHTML = `${esc(INDEX.frame)} Versus Plexe production alone on the same pairs: wrong merges ${d("merge")}; missed matches ${d("dsplit")}.`;
+  $("results").innerHTML = ORDER.map(m => { const x = metricValue(m, r.mapper[m]);
+    return `<div class="card"><h3>${tip(INDEX.labels[m], INDEX.help[m] + x.tipx)}</h3><div class="big num">${x.v}</div><div class="ci">${x.n} · ${x.c}</div></div>`; }).join("") +
+    `<div class="card"><h3>${tip("Checked by a person", INDEX.human.frame + ". Controls: " + INDEX.human.controls.k + " of " + INDEX.human.controls.n + " confirmed as the same room.")}</h3><div class="big num">${pct(hu.rate, 0)}</div><div class="ci">${hu.k} of ${hu.n} split groupings confirmed as different rooms · ${ci(hu.lo, hu.hi, 0)}</div></div>`;
+  const prod = ORDER.map(m => `${esc(INDEX.labels[m])} ${metricValue(m, r.production[m]).v}`).join(" · ");
+  $("frame").innerHTML = `<b>${esc(INDEX.f05_note)}</b><br>${esc(INDEX.frame)}<br>Plexe production alone on the same frame: ${prod}.<br>` +
+    ORDER.map(m => `${esc(INDEX.labels[m])}: ${esc(r.verdict[m])}`).join("<br>");
 }
 function hotelList() {
   const q = state.q.toLowerCase();
@@ -95,7 +102,7 @@ function renderHotel() {
     <div class="counters"><span class="pill" style="border-color:var(--red)">${fmt(c.risky_groups_split)} risky groupings split (${fmt(c.names_split)} listings)</span>${gsum}</div>`;
   html += `<div class="roomgrid">` + groups.map((g, gi) => `<article class="room"><header><h3>${esc(g.title)}</h3><div class="muted">${g.tkind === "website" ? "Room name from the hotel's website" : "Most common supplier name"} · ${g.members.length} listings · ${fmt(g.providers)} provider listings${g.from != null ? ` · from ${relPrice(g.from)}` : ""}</div></header>` +
     g.members.map(i => { const n = H.names[i], open = state.open === i, bs = state.view === "after" ? n.b.map(badge).join("") : "";
-      return `<button class="listing${n.b.includes("split") && state.view === "after" ? " split-row" : ""}" data-i="${i}" aria-expanded="${open}">${esc(n.raw)}${bs}<span class="px">${relPrice(n.px)}</span></button>` +
+      return `<button class="listing${n.b.includes("split") && state.view === "after" ? " split-row" : ""}" data-i="${i}" aria-expanded="${open}">${esc(n.raw)}${bs}</button>` +
         (open ? `<div class="why"><b>Why is this here?</b> ${state.view === "after" ? esc(n.why) : "Plexe production grouped it here."}${n.ev && state.view === "after" ? `<div class="muted small">Evidence: ${esc(n.ev)}</div>` : ""}${state.view === "after" ? guardDetail(n.g) : ""}</div>` : ""); }).join("") + `</article>`).join("") + `</div>`;
   const nol = H.names.map((n, i) => [n, i]).filter(([n]) => n.nol);
   if (nol.length) html += `<section class="nol"><h3>Not on the hotel's list</h3><p class="muted small">The mapper found no room type on the hotel's room list that these names describe. They stay where production put them.</p><ul>${nol.map(([n]) => `<li>${esc(n.raw)}</li>`).join("")}</ul></section>`;

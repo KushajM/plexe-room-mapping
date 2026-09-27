@@ -39,8 +39,9 @@ details.wrong summary{font-weight:600}
     <h1>Three room mappers, same supplier names</h1>
     <p class="lede">Vervotech, Plexe v2 (v3ak) and the Plexe mapper (production + safety layer + price guard) each grouped the same supplier
       room names. Fewer rows is better only if the rows are right, so every system is also checked against the hotel's own room list.</p>
-    <section class="cards" id="summary" aria-label="Summary"></section>
-    <div class="verdict" id="verdict"></div>
+    <div class="tablewrap"><table id="summary" aria-label="Results by metric"></table></div>
+    <p class="small"><b id="f05note"></b></p>
+    <p class="small muted" id="rpr"></p>
     <p class="small muted" id="frame"></p>
     <h2>Hotels</h2>
     <div class="hotels" id="hotels"></div>
@@ -54,18 +55,20 @@ const COLOR = {vervotech: "var(--sys-vervotech)", v3ak: "var(--sys-v3ak)", mappe
 const SHORT = {vervotech: "Vervotech", v3ak: "Plexe v2 (v3ak)", mapper: "Plexe mapper", reference: "Hotel's own rooms"};
 let INDEX = null, H = null;
 const state = {hotel: null, sel: null, open: null};
+const ORDER = ["missed", "merges", "coverage", "missell", "f05"];
+function cell(m, x) {
+  if (m === "f05") return `<b class="num">${x.rate.toFixed(3)}</b><br><span class="ci">n = ${x.hotels} hotels, ${fmt(x.names)} names · 95% CI ${x.lo.toFixed(3)} to ${x.hi.toFixed(3)}</span>` +
+    `<br><span class="ci">${tip("pooled " + (x.pooled == null ? "n/a" : x.pooled.toFixed(3)), "Pooled over names instead of averaged per hotel; 95% CI " + (x.pooled_lo == null ? "n/a" : x.pooled_lo.toFixed(3) + " to " + x.pooled_hi.toFixed(3)))}</span>`;
+  const d = m === "merges" ? 2 : 1, unit = m === "coverage" ? "names" : m === "missell" ? "rows" : "pairs";
+  return `<b class="num">${pct(x.rate, d)}</b><br><span class="ci">${fmt(x.num)} of ${fmt(x.den)} ${unit}, ${x.hotels} hotels · ${ci(x.lo, x.hi, d)}</span>`;
+}
 function summary() {
   const s = INDEX.summary;
-  $("summary").innerHTML = INDEX.systems.map(([k, name]) => { const x = s[k];
-    return `<div class="card sys-card" style="--c:${COLOR[k]}"><h3>${esc(name)}</h3>
-      <div class="metric">${tip("Rows per published room", "Rows the system shows for a hotel divided by the rooms the hotel's own website lists, averaged over hotels. 1.0 means one row per real room.")}<br><b>${x.rows_per_room.mean.toFixed(2)}</b> <span class="ci">n = ${x.rows_per_room.n} hotels · 95% CI ${x.rows_per_room.lo.toFixed(2)} to ${x.rows_per_room.hi.toFixed(2)}</span></div>
-      <div class="metric">${tip("Wrong merges", "Share of listing pairs from different rooms (by the hotel's website) that the system put in one row.")}<br><b>${pct(x.merge.rate, 2)}</b> <span class="ci">${fmt(x.merge.num)} of ${fmt(x.merge.den)} pairs · ${ci(x.merge.lo, x.merge.hi, 2)}</span></div>
-      <div class="metric">${tip("Missed matches, differently worded names", "Share of listing pairs of the same room, with differently worded names, that the system left in separate rows.")}<br><b>${pct(x.dsplit.rate, 1)}</b> <span class="ci">n = ${fmt(x.dsplit.den)} pairs · ${ci(x.dsplit.lo, x.dsplit.hi)}</span></div></div>`; }).join("");
-  const p = INDEX.paired, line = (o, m, what) => { const d = p[`mapper_minus_${o}_${m}`];
-    const dp = m === "merge" ? 2 : 1;
-    return `${what} vs ${SHORT[o]}: ${signed(d.diff, dp)} (${ci(d.lo, d.hi, dp)}) ${d.distinguishable ? "" : "<b>not distinguishable at " + d.hotels + " hotels</b>"}`; };
-  $("verdict").innerHTML = `<b>Plain verdict.</b> Plexe mapper minus the others, paired on the same hotels:<br>` +
-    ["vervotech", "v3ak"].map(o => line(o, "merge", "Wrong merges") + "<br>" + line(o, "dsplit", "Missed matches")).join("<br>");
+  $("summary").innerHTML = `<tr><th>Metric</th>${INDEX.systems.map(([k, name]) => `<th><span class="dot" style="background:${COLOR[k]}"></span>${esc(SHORT[k])}</th>`).join("")}<th>Plain verdict</th></tr>` +
+    ORDER.map(m => `<tr><td>${tip(INDEX.labels[m], INDEX.help[m])}</td>${INDEX.systems.map(([k]) => `<td>${cell(m, s[k][m])}</td>`).join("")}<td>${esc(INDEX.verdict[m])}</td></tr>`).join("");
+  $("f05note").textContent = INDEX.f05_note;
+  $("rpr").textContent = "Rows shown per room on the hotel's website, averaged over hotels: " + INDEX.systems.map(([k]) => { const r = INDEX.rows_per_room[k];
+    return `${SHORT[k]} ${r.mean.toFixed(2)} (n = ${r.n} hotels, 95% CI ${r.lo.toFixed(2)} to ${r.hi.toFixed(2)})`; }).join("; ") + ".";
   $("frame").textContent = INDEX.frame;
 }
 function hotelList() {
@@ -83,7 +86,7 @@ function renderHotel() {
   if (!H) return;
   const x = ctx(), m = H.metrics;
   let html = `<h2>${esc(H.name)}</h2><div class="muted">${esc(H.city)}</div>
-    <div class="reduction">${["vervotech", "v3ak", "mapper"].map(k => `<span class="pill" style="--c:${COLOR[k]}"><span class="dot" style="background:${COLOR[k]}"></span>${esc(SHORT[k])}: ${H.names.length} supplier names to ${m[k].rows} rows</span>`).join("")}
+    <div class="reduction">${["vervotech", "v3ak", "mapper"].map(k => `<span class="pill" style="--c:${COLOR[k]}"><span class="dot" style="background:${COLOR[k]}"></span>${esc(SHORT[k])}: ${H.names.length} supplier names to ${m[k].rows} rows${m[k].placed < H.names.length ? ` (${H.names.length - m[k].placed} not returned)` : ""}</span>`).join("")}
     <span class="pill" style="--c:${COLOR.reference}"><span class="dot" style="background:${COLOR.reference}"></span>The hotel's website lists ${H.website_rooms.length} rooms</span></div>`;
   if (state.sel) { const cnt = c => x.related[c].size;
     html += `<div class="relation"><span><b>Following ${x.names.size} supplier ${x.names.size === 1 ? "name" : "names"}</b> · ${x.cols.map(c => `${esc(SHORT[c])}: ${cnt(c)} ${cnt(c) === 1 ? "group" : "groups"}`).join(" · ")}</span><button id="clear">Show all</button></div>`; }
@@ -93,10 +96,10 @@ function renderHotel() {
     return `<section class="col" style="--c:${COLOR[c]}"><header><b>${esc(SHORT[c])}</b><span>${H.groups[c].length} rows</span></header><div class="glist">` +
       gs.map(([g, gi]) => { const sel = state.sel && state.sel.col === c && state.sel.gi === gi, open = sel || (state.open && state.open.col === c && state.open.gi === gi);
         return `<button class="grp${x.related[c].has(gi) ? " related" : ""}${sel ? " selected" : ""}${g.unplaced ? " unplaced" : ""}" data-col="${c}" data-gi="${gi}" aria-expanded="${!!open}">${esc(g.label)}<span class="cnt">${g.members.length}</span></button>` +
-          (open ? `<ul class="members">${g.members.map(i => `<li class="${x.names.has(i) ? "shared" : ""}">${esc(H.names[i].raw)}<span class="px">${relPrice(H.names[i].px)}</span></li>`).join("")}</ul>` : ""); }).join("") + `</div></section>`; }).join("") + `</div>`;
-  html += ["vervotech", "v3ak", "mapper"].map(k => { const w = H.wrong[k], mm = m[k].merge;
+          (open ? `<ul class="members">${g.members.map(i => `<li class="${x.names.has(i) ? "shared" : ""}">${esc(H.names[i].raw)}</li>`).join("")}</ul>` : ""); }).join("") + `</div></section>`; }).join("") + `</div>`;
+  html += ["vervotech", "v3ak", "mapper"].map(k => { const w = H.wrong[k], mm = m[k].merges;
     return `<details class="wrong"><summary>${esc(SHORT[k])}: wrong merges at this hotel, ${mm[0]} of ${mm[1]} checked pairs</summary>${w.length ? `<ul>${w.map(e => `<li>${esc(e[0])} <span class="muted">(${esc(e[1])})</span> with ${esc(e[2])} <span class="muted">(${esc(e[3])})</span></li>`).join("")}</ul>` : '<p class="muted">None among the checked pairs.</p>'}</details>`; }).join("");
-  html += `<p class="small muted">Prices are relative to the hotel's typical room. Room names in brackets come from the hotel's own website.</p>`;
+  html += `<p class="small muted">Room names in brackets come from the hotel's own website. Scores at this hotel use the ${H.common} names all three systems returned.</p>`;
   $("hotel").innerHTML = html;
 }
 async function openHotel(id, scroll) {

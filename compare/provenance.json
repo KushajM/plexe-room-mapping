@@ -18,9 +18,9 @@
   "Plexe v2 (v3ak) groups and labels": "v3ak_output",
   "Vervotech groups and labels": "vervotech_output",
   "hotel's own rooms": "website_catalogue",
+  "mis-sell prices": "panel_prices",
   "pairs for scoring": "v5_1_gold",
   "reference room per name": "v5_1_gold",
-  "relative price": "panel_prices",
   "supplier names": "benchmark_inputs"
  },
  "never_on_a_page": [
