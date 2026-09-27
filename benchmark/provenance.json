@@ -1,0 +1,35 @@
+{
+ "allowed_sources": [
+  "benchmark_inputs",
+  "derived",
+  "human_checks_aggregate",
+  "internal_set_aggregate",
+  "mapper_decision",
+  "panel_listings",
+  "panel_prices",
+  "panel_traffic",
+  "v3ak_output",
+  "v5_1_gold",
+  "vervotech_output",
+  "website_catalogue"
+ ],
+ "fields": {
+  "baselines": "v5_1_gold",
+  "funnel counts": "panel_listings",
+  "histograms": "v5_1_gold",
+  "human checks": "human_checks_aggregate",
+  "internal set aggregates": "internal_set_aggregate",
+  "released files": "v5_1_gold",
+  "split strata": "panel_traffic",
+  "supplier names in files": "panel_listings",
+  "website rooms in files": "website_catalogue"
+ },
+ "never_on_a_page": [
+  "internal evaluation set",
+  "internal gold built from a production database",
+  "supplier catalogue export",
+  "third-party (Expedia) room content"
+ ],
+ "note": "Every field on this site was registered with its source at build time; the build fails on any other source.",
+ "site": "benchmark"
+}

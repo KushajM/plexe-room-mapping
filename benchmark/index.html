@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Room mapping benchmark v5.1</title>
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.paper{max-width:860px}.toc{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 24px}.toc a{font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:var(--muted)}
+.funnel .row{display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:10px;align-items:center;margin:6px 0}
+.funnel .bar{height:26px;background:var(--orange);border-radius:6px;min-width:4px}.funnel .lab{font-size:13px;margin-bottom:2px}
+.funnel .n{font-variant-numeric:tabular-nums;font-weight:650;text-align:right}
+.chart{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 0}
+dl.ds dt{font-weight:650;margin-top:14px}dl.ds dd{margin:4px 0 0}
+.hv .big{font-size:26px}
+code{background:#f3ede6;padding:1px 5px;border-radius:4px;font-size:13px}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+  <div class="brandbar">
+    <a class="brand" href="../"><span class="brand-mark"><i></i><i></i><i></i></span><span>plexe</span></a>
+    <nav class="nav"><a href="../">Home</a><a class="on" href="./">Benchmark</a><a href="../compare/">Compare</a><a href="../mapper/">Mapper</a></nav>
+  </div>
+  <main id="main" class="paper">
+    <h1>A room-mapping benchmark from real booking traffic (v5.1)</h1>
+    <p class="muted" id="built"></p>
+    <nav class="toc" aria-label="Sections"><a href="#abstract">Abstract</a><a href="#sources">Data sources</a><a href="#pipeline">Construction</a><a href="#datasheet">Datasheet</a><a href="#files">Files</a><a href="#labels">Labels and splits</a><a href="#human">Human validation</a><a href="#results">Baselines</a><a href="#internal">Internal set</a><a href="#limits">Limitations</a><a href="#changelog">Changelog</a><a href="#download">Download</a></nav>
+
+    <h2 id="abstract">Abstract</h2>
+    <p id="abstract-text"></p>
+
+    <h2 id="sources">Data sources</h2>
+    <div class="tablewrap"><table>
+      <tr><th>Source</th><th>What it contributes</th><th>Used for gold?</th></tr>
+      <tr><td>Plexe panel</td><td>Supplier room names and prices from real searches, May 4 to August 11 2026: 85,548 hotels, 33.6 million requests.</td><td>Names only</td></tr>
+      <tr><td>Hotels' own websites</td><td>Official room lists, scraped after checking robots.txt, one request every 2 seconds per site.</td><td>Yes: the reference rooms</td></tr>
+      <tr><td>Plexe production groupings</td><td>How the live system grouped names (July to August 2026).</td><td>No: a baseline only, never an input to gold</td></tr>
+      <tr><td>People</td><td>Three blind review sheets (see Human validation).</td><td>Validation, plus 59 adjudicated pairs</td></tr>
+    </table></div>
+
+    <h2 id="pipeline">Construction pipeline</h2>
+    <p>Every stage below removes hotels for a stated reason. Bar length uses a log scale so the small final sets stay visible; the count is exact.</p>
+    <div class="chart funnel" id="funnel" role="img" aria-label="Hotels remaining at each construction stage"></div>
+    <p class="small muted">Horizontal axis: hotels remaining (log scale). <span id="chain"></span></p>
+    <h3>How a pair gets a label</h3>
+    <p>A supplier listing is placed on a room from the hotel's own website only when its normalised words equal exactly one published room's words.
+      Two listings on the same room form a <b>same-room</b> pair; two listings on different rooms, where neither room's words contain the other's, form a
+      <b>different-room</b> pair. Anything ambiguous is left out rather than guessed.</p>
+
+    <h2 id="datasheet">Datasheet</h2>
+    <dl class="ds" id="datasheet-body"></dl>
+
+    <h2 id="files">Files and shapes</h2>
+    <p>Every released file, with its size, its columns and an example value.</p>
+    <div id="files-body"></div>
+
+    <h2 id="labels">Label distributions and splits</h2>
+    <div class="cards" id="labelmix"></div>
+    <div class="chart" id="h-names"></div>
+    <div class="chart" id="h-rooms"></div>
+    <div class="chart" id="h-providers"></div>
+    <h3>Split sizes by stratum</h3>
+    <p>The dev and test halves were drawn once, with a fixed seed, within strata of traffic rank and gold density, so neither half gets most of the
+      traffic or most of the evidence. The test half is sealed: it is not scored and not published.</p>
+    <div class="tablewrap"><table id="strata"></table></div>
+
+    <h2 id="human">Human validation</h2>
+    <p>Three blind checks, each answered without seeing the machine's answer. The first pass of each sheet is the record.</p>
+    <div class="cards hv" id="human-body"></div>
+
+    <h2 id="results">Baselines and results</h2>
+    <p>All on the 477 public DEV hotels, counted over labelled listing pairs, with 95% confidence intervals from resampling hotels.</p>
+    <div class="tablewrap"><table id="baselines"></table></div>
+    <p class="small muted">Scores are counted per supplier name, so identical names already share a row; that is why "Identical names together"
+      scores the same as "Every name its own row".</p>
+    <div class="note"><b>Why the trivial token-set baseline wins here.</b> Same-room pairs in this gold exist only when both names have exactly the
+      words of one published room, so two names with the same set of words are always the same room by construction. Grouping by word set therefore
+      never misses a match this gold can see. The gold cannot see the hard cases (differently worded names for one room), so a low missed-match
+      number here is a floor, not a verdict.</div>
+
+    <h2 id="internal">The internal evaluation set (aggregates only)</h2>
+    <div id="internal-body"></div>
+
+    <h2 id="limits">Limitations</h2>
+    <ul>
+      <li><b>Missed matches measure only easy splits.</b> v5.1 split numbers see names that differ by word order or punctuation, not differently worded names for the same room.</li>
+      <li><b>Gold granularity.</b> A hotel's website may list "Deluxe Room" once while suppliers sell king and twin versions; the gold treats them as one room.</li>
+      <li><b>Machine-made labels.</b> Most pairs come from an exact-words rule, not from people; a person agreed with the related internal gold 80 of 100 times on first pass.</li>
+      <li><b>Chain hotels are missing.</b> <span id="chain2"></span> hotels could not be scraped because their chain's website blocks automated access; we did not work around it.</li>
+      <li><b>Third-party room content.</b> Supplier catalogues that carry Expedia content are used only as internal inputs and are never published here.</li>
+      <li><b>Coverage.</b> Gold hotels carry <span id="traffic"></span> of panel traffic; results may not hold for the long tail.</li>
+    </ul>
+
+    <h2 id="changelog">Changelog</h2>
+    <ul>
+      <li><b>v5.1</b> (2026-09-26): every hotel of the internal evaluation set removed, and the build now refuses to read it. Surviving pairs are byte-identical to v5.0.</li>
+      <li><b>v5</b> (2026-09-24): identity gold rebuilt from hotels' own websites on the panel frame; fresh sealed dev/test draw (seed 20260924).</li>
+      <li><b>v2.0</b>: retired ("burned"). Its test half was scored twice, and 3,200 of its gold rows are in another repository, so its test numbers can no longer be trusted.</li>
+    </ul>
+
+    <h2 id="download">Download</h2>
+    <p>Public v5.1 DEV files only. The sealed test half and the internal set are not released.</p>
+    <ul id="download-body"></ul>
+  </main>
+  <footer>Research preview by Plexe. Licence: research use; room names belong to the hotels and suppliers that publish them.</footer>
+</div>
+<script src="../assets/common.js"></script>
+<script>
+(async () => {
+  const D = await getJSON("data.json"), c = D.counts;
+  $("built").textContent = `Built ${D.built}. ${fmt(c.dev_hotels)} public hotels, ${fmt(c.dev_names)} supplier room names, ${fmt(c.dev_listing_pairs)} labelled listing pairs.`;
+  $("abstract-text").innerHTML = `We release a benchmark for hotel room mapping: grouping the many names suppliers use for one room into a single row, without joining different rooms.
+    It is built from real search traffic and labelled against each hotel's own website: ${fmt(c.dev_hotels)} public hotels, ${fmt(c.dev_names)} supplier names and ${fmt(c.dev_listing_pairs)} labelled pairs.
+    It measures <b>wrong merges</b> (two rooms shown as one, which can sell a guest the wrong room) and <b>missed matches</b> (one room shown twice).
+    Its gold only sees easy splits, so a trivial word-set rule scores almost perfectly on missed matches; we report that baseline up front.`;
+  const max = Math.log10(D.funnel[0].n);
+  $("funnel").innerHTML = D.funnel.map(f => `<div class="row"><div><div class="lab">${esc(f.label)}</div><div class="bar" style="width:${Math.max(2, 100 * Math.log10(Math.max(1, f.n)) / max)}%"></div></div><div class="n">${fmt(f.n)}</div></div>`).join("");
+  $("chain").textContent = `${fmt(D.chain_blocked)} chain hotels could not be scraped (the chain blocks automated access) and fall out at the room-list stage.`;
+  $("chain2").textContent = fmt(D.chain_blocked);
+  $("traffic").textContent = pct(c.traffic_share_gold_hotels, 1);
+  const ds = [["Composition", `Hotels, their official room lists, the supplier room names seen for them, and labelled pairs of listings (same room or different rooms). Public: ${fmt(c.dev_hotels)} hotels.`],
+    ["Collection", "Supplier names come from logged search responses (May to August 2026). Room lists were scraped from hotels' official websites after a robots.txt check, at one request every 2 seconds per site."],
+    ["Preprocessing", `Names are lowercased and whitespace-collapsed; rate-plan words are kept in the released name. ${pct(c.listing_map_rate, 1)} of listings in catalogued hotels could be placed on a published room by the exact-words rule; the rest stay unlabelled.`],
+    ["Labelling", "An exact-words rule places listings on published rooms, with vetoes for ambiguity. 59 pairs were adjudicated blind by a person. No production grouping is ever used to make a label."],
+    ["Uses", "Measuring wrong merges and easy missed matches of a room mapper. Not suitable for measuring hard missed matches (differently worded names)."],
+    ["Distribution", "CSV files below, public DEV half only. The sealed test half stays private so that no one, including us, can tune to it."],
+    ["Maintenance", "Versioned (see Changelog). Errors can be reported to Plexe; fixes ship as a new version, never as silent edits."]];
+  $("datasheet-body").innerHTML = ds.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("");
+  $("files-body").innerHTML = Object.entries(D.files).map(([fn, f]) => `<h3>${esc(fn)} <span class="muted small">${fmt(f.rows)} rows x ${f.columns} columns · ${(f.bytes / 1e6).toFixed(1)} MB</span></h3>
+    <div class="tablewrap"><table><tr><th>Column</th><th>Type</th><th>Example</th></tr>${f.schema.map(s => `<tr><td><code>${esc(s.column)}</code></td><td>${esc(s.type)}</td><td>${esc(s.example)}</td></tr>`).join("")}</table></div>`).join("");
+  const lm = c.label_mix;
+  $("labelmix").innerHTML = [["Same room, differently written", lm["SAME/distinct"]], ["Same room, identical name", lm["SAME/identical"]], ["Different rooms", (lm["DIFFERENT/distinct"] || 0) + (lm["DIFFERENT/identical"] || 0)]]
+    .map(([k, v]) => `<div class="card"><h3>${esc(k)}</h3><div class="big num">${fmt(v)}</div><div class="ci">${pct(v / c.dev_listing_pairs, 1)} of ${fmt(c.dev_listing_pairs)} labelled listing pairs</div></div>`).join("");
+  $("h-names").innerHTML = barChart(D.hists.names, {x: "Supplier room names per hotel", y: "Hotels"});
+  $("h-rooms").innerHTML = barChart(D.hists.rooms, {x: "Rooms on the hotel's own website", y: "Hotels", color: "#47745e"});
+  $("h-providers").innerHTML = barChart(D.hists.providers, {x: "Suppliers selling the hotel", y: "Hotels", color: "#4f76ad"});
+  $("strata").innerHTML = `<tr><th>Traffic rank</th><th>Gold density</th><th>Dev hotels</th><th>Test hotels (sealed)</th></tr>` + D.strata.map(s => `<tr><td>${esc(s.band)}</td><td>${esc(s.density)}</td><td class="num">${s.dev}</td><td class="num">${s.test}</td></tr>`).join("");
+  $("human-body").innerHTML = D.human.map(h => `<div class="card"><h3>${esc(h.name)}</h3><div class="big num">${h.k} of ${h.n}</div><div class="ci">${pct(h.rate, 0)} · ${ci(h.lo, h.hi, 0)}</div><p class="small">${esc(h.detail)}</p><p class="small"><b>Plain reading.</b> ${esc(h.reading)}</p></div>`).join("");
+  const NAMES = {all_singletons: "Every name its own row", all_one_row: "Everything in one row", exact_name: "Identical names together", token_set: "Same set of words together (degenerate)", production: "Plexe production (Jul to Aug 2026)", mapper: "Plexe mapper (production + safety layer + price guard)"};
+  const cell = x => `<b class="num">${pct(x.rate, 2)}</b><br><span class="ci">n = ${fmt(x.den)} · ${ci(x.lo, x.hi, 2)}</span>`;
+  $("baselines").innerHTML = `<tr><th>System</th><th>${tip("Wrong merges", "Different-room pairs shown in one row.")}</th><th>${tip("Missed matches, all", "Same-room pairs shown in separate rows.")}</th><th>${tip("Missed matches, differently written", "Same-room pairs whose names differ, shown in separate rows.")}</th></tr>` +
+    Object.entries(D.baselines).map(([k, b]) => `<tr><td>${esc(NAMES[k])}</td><td>${cell(b.merge)}</td><td>${cell(b.split)}</td><td>${cell(b.dsplit)}</td></tr>`).join("");
+  const I = D.internal;
+  $("internal-body").innerHTML = `<p>${esc(I.note)}</p><div class="cards">
+    <div class="card"><h3>Size</h3><div class="big num">${fmt(I.hotels)}</div><div class="ci">hotels · ${fmt(I.supplier_names)} supplier names · ${I.cities} cities</div></div>
+    <div class="card"><h3>Evaluation split</h3><div class="big num">${fmt(I.splits["sealed evaluation split"].dev)}</div><div class="ci">dev hotels · ${fmt(I.splits["sealed evaluation split"]["test (sealed)"])} test hotels sealed</div></div>
+    <div class="card"><h3>Dev, further split</h3><div class="big num">${fmt(I.splits["dev, further split"].tuning)}</div><div class="ci">tuning hotels · ${fmt(I.splits["dev, further split"]["held out for the human check"])} held out for the human check</div></div></div>
+    <div class="tablewrap"><table><tr><th>Label of a supplier name</th><th>Names</th><th>Share</th></tr>${Object.entries(I.labels).map(([k, v]) => `<tr><td>${esc(k)}</td><td class="num">${fmt(v)}</td><td class="num">${pct(v / I.supplier_names, 1)}</td></tr>`).join("")}</table></div>
+    <p class="small muted">Files: ${esc(I.files)}. Sources: ${Object.entries(I.source_types).map(([k, v]) => `${esc(k)} ${fmt(v)}`).join(", ")}.</p>`;
+  $("download-body").innerHTML = Object.entries(D.files).map(([fn, f]) => `<li><a href="files/${encodeURIComponent(fn)}" download>${esc(fn)}</a> <span class="muted small">${fmt(f.rows)} rows · ${(f.bytes / 1e6).toFixed(1)} MB</span></li>`).join("");
+})();
+</script>
+</body>
+</html>

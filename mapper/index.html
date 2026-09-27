@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Plexe mapper: one row per real room</title>
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+.results .big{color:var(--sys-mapper)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}
+.step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
+.step b{display:inline-flex;width:26px;height:26px;border-radius:50%;background:var(--orange-soft);color:var(--orange-dark);align-items:center;justify-content:center;margin-right:8px}
+.hotelhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 8px}
+.reduce{font-size:15px}.reduce b{font-size:20px}
+.counters{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 16px}
+.roomgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.room{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.room header{padding:12px 14px;border-bottom:1px solid var(--line)}
+.room header h3{margin:0;font-size:15px}.room header .muted{font-size:12px}
+.listing{display:block;width:100%;text-align:left;border:0;border-top:1px solid #f3eee8;background:#fff;padding:9px 14px;font-size:14px}
+.listing:first-of-type{border-top:0}.listing:hover{background:#fdf8f3}.listing[aria-expanded="true"]{background:var(--orange-soft)}
+.listing .px{float:right;color:var(--muted);font-size:12px;margin-left:8px}
+.why{padding:10px 14px 12px;background:var(--orange-soft);font-size:13.5px;border-top:1px solid #f1dfd1}
+.why .cands{margin:8px 0 0;padding-left:18px}.split-row{background:#fff7f5}
+.more{margin:10px 0;background:#fff;border:1px solid var(--line);border-radius:20px;padding:6px 14px}
+.nol{margin-top:22px}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+  <div class="brandbar">
+    <a class="brand" href="../"><span class="brand-mark"><i></i><i></i><i></i></span><span>plexe</span></a>
+    <nav class="nav"><a href="../">Home</a><a href="../benchmark/">Benchmark</a><a href="../compare/">Compare</a><a class="on" href="./">Mapper</a></nav>
+  </div>
+  <main id="main">
+    <h1>One row per real room, not one per supplier spelling</h1>
+    <p class="lede">Suppliers describe the same hotel room in dozens of ways. The Plexe mapper (production + safety layer + price guard)
+      keeps Plexe production's grouping, splits off listings whose wording points to a different room, and places vague names at the
+      lowest grade unless prices say otherwise. It never merges groups.</p>
+    <section class="cards results" id="results" aria-label="Results"></section>
+    <p class="small muted" id="frame"></p>
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><b>1</b>Start from Plexe production's room groups (July to August 2026).</div>
+      <div class="step"><b>2</b>Read each supplier name against the hotel's room list: an exact match, the only room that fits, a word that singles out one room, or an AI reader quoting the name.</div>
+      <div class="step"><b>3</b>Split off any listing whose wording points to a different room than the rest of its group. Nothing is ever merged.</div>
+      <div class="step"><b>4</b>Price guard: a name that does not say its grade goes to the lowest grade, unless prices show it belongs higher.</div>
+    </div>
+    <h2>Hotels</h2>
+    <input class="search" id="q" type="search" placeholder="Search by hotel name or city" aria-label="Search hotels">
+    <div class="hotels" id="hotels"></div>
+    <button class="more" id="more" hidden>Show more hotels</button>
+    <section id="hotel" aria-live="polite"></section>
+  </main>
+  <footer>Research preview by Plexe. Frames and caveats are stated next to every number. Not an official hotel listing.</footer>
+</div>
+<script src="../assets/common.js"></script>
+<script>
+const state = {q: "", shown: 60, hotel: null, view: "after", open: null};
+let INDEX = null, H = null;
+const BADGE = {exact: ["b-exact", "exact", "The name matches one of the hotel's room types word for word."],
+  clear: ["b-clear", "clear", "Only one room type fits what the name states, or the deciding words are quoted from the name."],
+  split: ["b-split", "split for safety", "Split off its production group because its wording points to a different room type."],
+  guard: ["b-guard", "price guard", "The name does not state its grade; the price guard decided which grade it sits in."]};
+function results() {
+  const r = INDEX.results, hu = INDEX.human.split_confirmed;
+  $("results").innerHTML = [
+    `<div class="card"><h3>${tip("Checked by a person", INDEX.human.frame + ". Controls: " + INDEX.human.controls.k + " of " + INDEX.human.controls.n + " confirmed as the same room.")}</h3><div class="big num">${pct(hu.rate, 0)}</div><div class="ci">${hu.k} of ${hu.n} split groupings confirmed as different rooms · ${ci(hu.lo, hu.hi, 0)}</div></div>`,
+    `<div class="card"><h3>${tip("Wrong merges", "Share of listing pairs from different rooms (by the hotel's own website) that end up in one row.")}</h3><div class="big num">${pct(r.merge.mapper.rate, 2)}</div><div class="ci">n = ${fmt(r.merge.mapper.den)} pairs, ${r.merge.mapper.hotels} hotels · ${ci(r.merge.mapper.lo, r.merge.mapper.hi, 2)}</div></div>`,
+    `<div class="card"><h3>${tip("Missed matches, differently worded names", "Share of listing pairs of the same room, with differently worded names, shown in separate rows.")}</h3><div class="big num">${pct(r.dsplit.mapper.rate, 1)}</div><div class="ci">n = ${fmt(r.dsplit.mapper.den)} pairs, ${r.dsplit.mapper.hotels} hotels · ${ci(r.dsplit.mapper.lo, r.dsplit.mapper.hi, 1)}</div></div>`].join("");
+  const d = m => `${signed(r[m].diff.diff, 2)} (${ci(r[m].diff.lo, r[m].diff.hi, 2)})${r[m].distinguishable ? "" : ", not distinguishable from zero"}`;
+  $("frame").innerHTML = `${esc(INDEX.frame)} Versus Plexe production alone on the same pairs: wrong merges ${d("merge")}; missed matches ${d("dsplit")}.`;
+}
+function hotelList() {
+  const q = state.q.toLowerCase();
+  const hs = INDEX.hotels.filter(h => !q || (h.name + " " + h.city).toLowerCase().includes(q));
+  $("hotels").innerHTML = hs.slice(0, state.shown).map(h => `<button class="hotel-btn${h.id === state.hotel ? " on" : ""}" data-id="${esc(h.id)}"><b>${esc(h.name)}</b><span>${h.city ? esc(h.city) + " · " : ""}${fmt(h.n)} names to ${fmt(h.ra)} rows${h.risky ? ` · ${h.risky} split` : ""}</span></button>`).join("") || '<p class="muted">No hotel matches.</p>';
+  $("more").hidden = hs.length <= state.shown;
+}
+function badge(k) { const b = BADGE[k]; return `<span class="badge ${b[0]}" title="${esc(b[2])}">${esc(b[1])}</span>`; }
+function guardDetail(g) {
+  if (!g) return "";
+  const c = g.candidates.map(x => `<li>${x.label ? esc(x.label) + ` <span class="muted">(${esc(x.kind)})</span>` : '<span class="muted">a room type with no listing placed on it</span>'}${x.px != null ? ` · typical price ${relPrice(x.px)}` : ""}${x.is_lowest ? " · lowest grade" : ""}${x.is_group_room ? " · its production group" : ""}</li>`).join("");
+  return `<div><b>Price guard:</b> ${esc(g.outcome)}.${g.k != null ? ` Compared on ${fmt(g.k)} requests priced together.` : " No requests priced together with the room's other listings."}<ul class="cands">${c}</ul><span class="muted small">Candidate rooms, lowest grade first. Prices are relative to the hotel's typical room.</span></div>`;
+}
+function renderHotel() {
+  if (!H) { $("hotel").innerHTML = ""; return; }
+  const groups = state.view === "after" ? H.after : H.before, c = H.counters;
+  const gsum = Object.entries(c.guard).map(([k, v]) => `<span class="pill">${esc(k)}: ${fmt(v)}</span>`).join(" ");
+  let html = `<div class="hotelhead"><div><h2 style="margin:0">${esc(H.name)}</h2>${H.city ? `<div class="muted">${esc(H.city)}</div>` : ""}${H.id === INDEX.featured ? '<span class="pill">Featured example</span>' : ""}</div>
+    <div class="toggle" role="group" aria-label="View"><button id="v-before" aria-pressed="${state.view === "before"}">Plexe production alone</button><button id="v-after" aria-pressed="${state.view === "after"}">With safety layer + price guard</button></div></div>
+    <p class="reduce"><b class="num">${fmt(H.names.length)}</b> supplier names to <b class="num">${fmt(groups.length)}</b> rows shown · the hotel's website lists <b class="num">${fmt(H.website_rooms)}</b> rooms</p>
+    <div class="counters"><span class="pill" style="border-color:var(--red)">${fmt(c.risky_groups_split)} risky groupings split (${fmt(c.names_split)} listings)</span>${gsum}</div>`;
+  html += `<div class="roomgrid">` + groups.map((g, gi) => `<article class="room"><header><h3>${esc(g.title)}</h3><div class="muted">${g.tkind === "website" ? "Room name from the hotel's website" : "Most common supplier name"} · ${g.members.length} listings · ${fmt(g.providers)} provider listings${g.from != null ? ` · from ${relPrice(g.from)}` : ""}</div></header>` +
+    g.members.map(i => { const n = H.names[i], open = state.open === i, bs = state.view === "after" ? n.b.map(badge).join("") : "";
+      return `<button class="listing${n.b.includes("split") && state.view === "after" ? " split-row" : ""}" data-i="${i}" aria-expanded="${open}">${esc(n.raw)}${bs}<span class="px">${relPrice(n.px)}</span></button>` +
+        (open ? `<div class="why"><b>Why is this here?</b> ${state.view === "after" ? esc(n.why) : "Plexe production grouped it here."}${n.ev && state.view === "after" ? `<div class="muted small">Evidence: ${esc(n.ev)}</div>` : ""}${state.view === "after" ? guardDetail(n.g) : ""}</div>` : ""); }).join("") + `</article>`).join("") + `</div>`;
+  const nol = H.names.map((n, i) => [n, i]).filter(([n]) => n.nol);
+  if (nol.length) html += `<section class="nol"><h3>Not on the hotel's list</h3><p class="muted small">The mapper found no room type on the hotel's room list that these names describe. They stay where production put them.</p><ul>${nol.map(([n]) => `<li>${esc(n.raw)}</li>`).join("")}</ul></section>`;
+  $("hotel").innerHTML = html;
+}
+async function openHotel(id, scroll) {
+  state.hotel = id; state.open = null; hotelList();
+  H = await getJSON(`data/h/${encodeURIComponent(id)}.json`); renderHotel();
+  try { history.replaceState(null, "", "#hotel=" + encodeURIComponent(id)); } catch (e) {}
+  if (scroll) $("hotel").scrollIntoView({behavior: "smooth", block: "start"});
+}
+document.addEventListener("click", e => {
+  const hb = e.target.closest(".hotel-btn"); if (hb) return openHotel(hb.dataset.id, true);
+  const li = e.target.closest(".listing"); if (li) { const i = +li.dataset.i; state.open = state.open === i ? null : i; return renderHotel(); }
+  if (e.target.id === "v-before" || e.target.id === "v-after") { state.view = e.target.id === "v-before" ? "before" : "after"; state.open = null; return renderHotel(); }
+  if (e.target.id === "more") { state.shown += 60; hotelList(); }
+});
+$("q").addEventListener("input", e => { state.q = e.target.value; state.shown = 60; hotelList(); });
+(async () => {
+  INDEX = await getJSON("data/index.json"); results(); hotelList();
+  const m = location.hash.match(/hotel=([^&]+)/);
+  openHotel(m ? decodeURIComponent(m[1]) : (INDEX.featured || INDEX.hotels[0].id), false);
+})();
+</script>
+</body>
+</html>

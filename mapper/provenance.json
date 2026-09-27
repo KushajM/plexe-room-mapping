@@ -1,0 +1,37 @@
+{
+ "allowed_sources": [
+  "benchmark_inputs",
+  "derived",
+  "human_checks_aggregate",
+  "internal_set_aggregate",
+  "mapper_decision",
+  "panel_listings",
+  "panel_prices",
+  "panel_traffic",
+  "v3ak_output",
+  "v5_1_gold",
+  "vervotech_output",
+  "website_catalogue"
+ ],
+ "fields": {
+  "card title (website room)": "website_catalogue",
+  "groups after / badges / why / price-guard outcome": "mapper_decision",
+  "groups before": "panel_listings",
+  "guard candidate labels": "website_catalogue",
+  "human check 49/60": "human_checks_aggregate",
+  "names/raw": "panel_listings",
+  "pairs for scoring": "v5_1_gold",
+  "providers": "panel_listings",
+  "relative price": "panel_prices",
+  "traffic order": "panel_traffic",
+  "website room per name": "v5_1_gold"
+ },
+ "never_on_a_page": [
+  "internal evaluation set",
+  "internal gold built from a production database",
+  "supplier catalogue export",
+  "third-party (Expedia) room content"
+ ],
+ "note": "Every field on this site was registered with its source at build time; the build fails on any other source.",
+ "site": "mapper"
+}
