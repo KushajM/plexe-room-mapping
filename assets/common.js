@@ -7,7 +7,7 @@ const signed = (x, d = 1) => x == null ? "n/a" : (x > 0 ? "+" : x < 0 ? "-" : ""
 const relPrice = p => p == null ? "" : (p > 0 ? "+" : p < 0 ? "-" : "") + Math.abs(p) + "%";
 const $ = id => document.getElementById(id);
 // every build stamps its own version, so a rebuild never mixes a new page with data cached from an old one
-const BUILD = "20260927133228";
+const BUILD = "20260927135449";
 async function getJSON(url) { const r = await fetch(url + (url.includes("?") ? "&" : "?") + "v=" + BUILD, {cache: "no-cache"}); if (!r.ok) throw new Error(url + " " + r.status); return r.json(); }
 function tip(text, help) { return `<span class="tip" title="${esc(help)}" tabindex="0">${esc(text)}</span>`; }
 // simple labelled SVG bar chart: bins [{label, value}], axis titles required

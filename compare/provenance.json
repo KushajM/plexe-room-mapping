@@ -14,7 +14,7 @@
   "website_catalogue"
  ],
  "fields": {
-  "Plexe mapper groups": "mapper_decision",
+  "Plexe mapper groups, fallback steps and badges": "mapper_decision",
   "Plexe v2 (v3ak) groups and labels": "v3ak_output",
   "Vervotech groups and labels": "vervotech_output",
   "hotel's own rooms": "website_catalogue",

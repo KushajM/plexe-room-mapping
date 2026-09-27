@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Compare room mapping systems</title>
-<link rel="stylesheet" href="../assets/site.css?v=20260927133228">
+<link rel="stylesheet" href="../assets/site.css?v=20260927135449">
 <style>
 .sys-card{border-top:4px solid var(--c)}.sys-card .big{color:var(--c)}
 .metric{margin:8px 0}.metric b{font-size:22px;font-variant-numeric:tabular-nums}
@@ -39,9 +39,18 @@ details.wrong summary{font-weight:600}
     <h1>Three room mappers, same supplier names</h1>
     <p class="lede">Vervotech, Plexe v2 (v3ak) and the Plexe mapper (production + safety layer + price guard) each grouped the same supplier
       room names. Fewer rows is better only if the rows are right, so every system is also checked against the hotel's own room list.</p>
-    <div class="tablewrap"><table id="summary" aria-label="Results by metric"></table></div>
+    <p class="note" id="mappernote"></p>
+    <h2>All names, with the fallback</h2>
+    <p class="small muted" id="frame-ii"></p>
+    <div class="tablewrap"><table id="summary-ii" aria-label="Results on all names"></table></div>
+    <h2>Names all three systems placed</h2>
+    <p class="small muted" id="frame-i"></p>
+    <div class="tablewrap"><table id="summary-i" aria-label="Results on shared names"></table></div>
     <p class="small"><b id="f05note"></b></p>
-    <p class="small muted" id="rpr"></p>
+    <h2>Rows shown</h2>
+    <div class="tablewrap"><table id="rows"></table></div>
+    <div class="tablewrap" style="margin-top:12px"><table id="rows-mapper"></table></div>
+    <p class="small muted" id="rownote"></p>
     <p class="small muted" id="frame"></p>
     <h2>Hotels</h2>
     <div class="hotels" id="hotels"></div>
@@ -49,7 +58,7 @@ details.wrong summary{font-weight:600}
   </main>
   <footer>Research preview by Plexe. Vervotech and Plexe v2 (v3ak) outputs are shown as each system returned them. Not an official hotel listing.</footer>
 </div>
-<script src="../assets/common.js?v=20260927133228"></script>
+<script src="../assets/common.js?v=20260927135449"></script>
 <script>
 const COLOR = {vervotech: "var(--sys-vervotech)", v3ak: "var(--sys-v3ak)", mapper: "var(--sys-mapper)", reference: "var(--sys-reference)"};
 const SHORT = {vervotech: "Vervotech", v3ak: "Plexe v2 (v3ak)", mapper: "Plexe mapper", reference: "Hotel's own rooms"};
@@ -62,13 +71,31 @@ function cell(m, x) {
   const d = m === "merges" ? 2 : 1, unit = m === "coverage" ? "names" : m === "missell" ? "rows" : "pairs";
   return `<b class="num">${pct(x.rate, d)}</b><br><span class="ci">${fmt(x.num)} of ${fmt(x.den)} ${unit}, ${x.hotels} hotels · ${ci(x.lo, x.hi, d)}</span>`;
 }
+function table(id, s, ver, withNoFallback) {
+  $(id).innerHTML = `<tr><th>Metric</th>${INDEX.systems.map(([k]) => `<th><span class="dot" style="background:${COLOR[k]}"></span>${esc(SHORT[k])}</th>`).join("")}<th>Plain verdict</th></tr>` +
+    ORDER.map(m => `<tr><td>${tip(INDEX.labels[m], INDEX.help[m])}</td>${INDEX.systems.map(([k]) => { let c = cell(m, s[k][m]);
+      if (withNoFallback && m === "coverage" && k === "mapper") { const w = s.mapper.coverage_without_fallback; c += `<br><span class="ci">without the fallback: ${pct(w.rate, 1)} (${ci(w.lo, w.hi)})</span>`; }
+      return `<td>${c}</td>`; }).join("")}<td>${esc(ver[m])}</td></tr>`).join("");
+}
+const ci1 = x => `95% CI ${x.lo.toFixed(1)} to ${x.hi.toFixed(1)}`;
 function summary() {
-  const s = INDEX.summary;
-  $("summary").innerHTML = `<tr><th>Metric</th>${INDEX.systems.map(([k, name]) => `<th><span class="dot" style="background:${COLOR[k]}"></span>${esc(SHORT[k])}</th>`).join("")}<th>Plain verdict</th></tr>` +
-    ORDER.map(m => `<tr><td>${tip(INDEX.labels[m], INDEX.help[m])}</td>${INDEX.systems.map(([k]) => `<td>${cell(m, s[k][m])}</td>`).join("")}<td>${esc(INDEX.verdict[m])}</td></tr>`).join("");
+  $("mappernote").textContent = INDEX.mapper_note;
+  table("summary-ii", INDEX.summary_ii, INDEX.verdict_ii, true);
+  table("summary-i", INDEX.summary_i, INDEX.verdict_i, false);
+  $("frame-i").textContent = INDEX.frame_i; $("frame-ii").textContent = INDEX.frame_ii;
   $("f05note").textContent = INDEX.f05_note;
-  $("rpr").textContent = "Rows shown per room on the hotel's website, averaged over hotels: " + INDEX.systems.map(([k]) => { const r = INDEX.rows_per_room[k];
-    return `${SHORT[k]} ${r.mean.toFixed(2)} (n = ${r.n} hotels, 95% CI ${r.lo.toFixed(2)} to ${r.hi.toFixed(2)})`; }).join("; ") + ".";
+  const R = INDEX.rows, pr = R.published_rooms;
+  $("rows").innerHTML = `<tr><th>System</th><th>Rows per hotel</th><th>Rows per room on the hotel's website</th></tr>` +
+    INDEX.systems.map(([k]) => { const x = R.systems[k]; return `<tr><td><span class="dot" style="background:${COLOR[k]}"></span>${esc(SHORT[k])}${k === "mapper" ? " (with the fallback)" : ""}</td><td><b class="num">${x.rows.mean.toFixed(1)}</b> <span class="ci">n = ${x.rows.n} hotels · ${ci1(x.rows)}</span></td><td><b class="num">${x.per_room.mean.toFixed(2)}</b> <span class="ci">95% CI ${x.per_room.lo.toFixed(2)} to ${x.per_room.hi.toFixed(2)}</span></td></tr>`; }).join("") +
+    `<tr><td>Rooms on the hotel's own website</td><td><b class="num">${pr.mean.toFixed(1)}</b> <span class="ci">n = ${pr.n} hotels · ${ci1(pr)}</span></td><td>1.00 by definition</td></tr>`;
+  const M = R.mapper, T = M.totals, rc = R.reach;
+  $("rows-mapper").innerHTML = `<tr><th>Plexe mapper rows</th><th>Per hotel</th><th>All 44 hotels</th><th>Names reaching this step</th></tr>` +
+    [["Before the fallback (production groups only)", M.before, T.before, rc["production group"]],
+     ["Added by fallback step a (same words as a grouped name)", M.added_a, T.a, rc.a],
+     ["Added by fallback step b (exact match or only compatible room)", M.added_b, T.b, rc.b],
+     ["Added by fallback step c (own row)", M.added_c, T.c, rc.c],
+     ["After the fallback", M.after, T.after, null]].map(([lab, x, t, r]) => `<tr><td>${esc(lab)}</td><td><b class="num">${x.mean.toFixed(1)}</b> <span class="ci">${ci1(x)}</span></td><td class="num">${fmt(t)}</td><td>${r ? `<b class="num">${pct(r.rate, 1)}</b> <span class="ci">${fmt(r.num)} of ${fmt(r.den)} names · ${ci(r.lo, r.hi)}</span>` : ""}</td></tr>`).join("");
+  $("rownote").textContent = R.note;
   $("frame").textContent = INDEX.frame;
 }
 function hotelList() {
@@ -96,10 +123,12 @@ function renderHotel() {
     return `<section class="col" style="--c:${COLOR[c]}"><header><b>${esc(SHORT[c])}</b><span>${H.groups[c].length} rows</span></header><div class="glist">` +
       gs.map(([g, gi]) => { const sel = state.sel && state.sel.col === c && state.sel.gi === gi, open = sel || (state.open && state.open.col === c && state.open.gi === gi);
         return `<button class="grp${x.related[c].has(gi) ? " related" : ""}${sel ? " selected" : ""}${g.unplaced ? " unplaced" : ""}" data-col="${c}" data-gi="${gi}" aria-expanded="${!!open}">${esc(g.label)}<span class="cnt">${g.members.length}</span></button>` +
-          (open ? `<ul class="members">${g.members.map(i => `<li class="${x.names.has(i) ? "shared" : ""}">${esc(H.names[i].raw)}</li>`).join("")}</ul>` : ""); }).join("") + `</div></section>`; }).join("") + `</div>`;
+          (open ? `<ul class="members">${g.members.map(i => { const n = H.names[i], fbk = c === "mapper" && n.fb;
+          return `<li class="${x.names.has(i) ? "shared" : ""}">${esc(n.raw)}${fbk ? `<span class="badge b-guard" title="${esc(n.why)}">New name: placed by fallback (${esc(n.fb)})</span><div class="muted small">Why is this here? ${esc(n.why)}</div>` : ""}</li>`; }).join("")}</ul>` : ""); }).join("") + `</div></section>`; }).join("") + `</div>`;
   html += ["vervotech", "v3ak", "mapper"].map(k => { const w = H.wrong[k], mm = m[k].merges;
     return `<details class="wrong"><summary>${esc(SHORT[k])}: wrong merges at this hotel, ${mm[0]} of ${mm[1]} checked pairs</summary>${w.length ? `<ul>${w.map(e => `<li>${esc(e[0])} <span class="muted">(${esc(e[1])})</span> with ${esc(e[2])} <span class="muted">(${esc(e[3])})</span></li>`).join("")}</ul>` : '<p class="muted">None among the checked pairs.</p>'}</details>`; }).join("");
-  html += `<p class="small muted">Room names in brackets come from the hotel's own website. Scores at this hotel use the ${H.common} names all three systems returned.</p>`;
+  const rc = H.rowcount;
+  html += `<p class="small muted">Plexe mapper rows at this hotel: ${rc.before} from production groups, plus ${rc.a + rc.b + rc.c} added by the fallback (a ${rc.a}, b ${rc.b}, c ${rc.c}), ${rc.after} in all. Room names in brackets come from the hotel's own website. Wrong-merge examples use all names with the fallback.</p>`;
   $("hotel").innerHTML = html;
 }
 async function openHotel(id, scroll) {
