@@ -1,0 +1,30 @@
+{
+ "allowed_sources": [
+  "benchmark_inputs",
+  "derived",
+  "human_checks_aggregate",
+  "internal_set_aggregate",
+  "mapper_decision",
+  "panel_listings",
+  "panel_prices",
+  "panel_traffic",
+  "v3ak_output",
+  "v5_1_gold",
+  "vervotech_output",
+  "website_catalogue"
+ ],
+ "fields": {
+  "Plexe mapper rows": "mapper_decision",
+  "encoder + picker rows": "derived",
+  "supplier names": "panel_listings",
+  "website room names": "website_catalogue"
+ },
+ "never_on_a_page": [
+  "internal evaluation set",
+  "internal gold built from a production database",
+  "supplier catalogue export",
+  "third-party (Expedia) room content"
+ ],
+ "note": "Every field on this site was registered with its source at build time; the build fails on any other source.",
+ "site": "bed-merges"
+}

@@ -1,0 +1,85 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Different Beds, One Row</title>
+<link rel="stylesheet" href="../assets/site.css?v=20260928213409">
+<style>
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 15px;font-size:14px}
+.chips button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cases{display:grid;gap:18px}
+.case{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:14px}
+.case-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.case-head h2{margin:0;font-size:19px}
+.tag{font-size:12px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:#f3eee8;border-radius:6px;padding:3px 9px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.box{border-radius:12px;padding:14px}
+.box.bad{background:var(--red-soft)}.box.good{background:var(--green-soft)}
+.say{display:flex;align-items:center;gap:8px;font-size:15px;margin-bottom:10px}
+.say .icon{display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px}
+.bad .icon{background:var(--red)}.good .icon{background:var(--green)}
+.bad .say b{color:var(--red)}.good .say b{color:var(--green)}
+.row{background:#fff;border-radius:10px;padding:10px 12px;display:grid;gap:6px}
+.good .row + .row{margin-top:8px}
+.row-label{font-size:12px;color:var(--muted)}
+.name{font-family:ui-monospace,Consolas,"SF Mono",monospace;font-size:14px;word-break:break-word}
+mark{background:#fde68a;color:#3f3000;border-radius:3px;padding:0 3px}
+details{margin-top:8px;font-size:13px;color:var(--muted)}
+details summary{cursor:pointer}
+details ul{margin:6px 0 0;padding-left:18px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:var(--ink)}
+.site{font-size:14px;color:var(--green)}
+@media (max-width:700px){.vs{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brandbar">
+    <a class="brand" href="../"><span class="brand-mark"><i></i><i></i><i></i></span><span>plexe</span></a>
+    <nav class="nav"><a href="../">Home</a><a href="../benchmark/">Benchmark</a><a href="../compare/">Compare</a><a href="../mapper/">Mapper</a></nav>
+  </div>
+  <main>
+    <h1>Different beds, one row</h1>
+    <nav class="chips" id="chips" aria-label="Filter by bed type"></nav>
+    <section class="cases" id="cases" aria-live="polite"></section>
+  </main>
+  <footer>Plexe · room mapping research. Supplier room names are shown exactly as suppliers sent them.</footer>
+</div>
+<script id="data" type="application/json">{"cases":[{"hotel":"Premier Inn Abu Dhabi Airport (Business Park)","kind":"double vs twin","a":"room, double bed","b":"room, twin beds","enc":["family","family room (2 adults and 2 children under 16)","room, double bed","room, twin beds"],"enc_n":4,"site":["Double Room","Twin Room"]},{"hotel":"Jambuluwuk Oceano Gili Trawangan","kind":"king vs twin","a":"1 bedroom standard king family villa","b":"1 bedroom standard twin family villa","enc":[",1 x duplex family suite [bedtype 1 double 1 twin]",",1 x family suite, 2 bedrooms duplex mezzanine","1 bedroom standard family villa","1 bedroom standard king family villa","1 bedroom standard twin family villa","1 bedroom, family, villa, king bed","1 x duplex family suite [bedtype: 1 double 1 twin]","1family suite, 2 bedrooms duplex mezzanine , 2 twin beds and 1 double bed","2 bedroom duplex family suite with mezzanine","duplex","duplex - family","duplex double or twin family suite","duplex family room","duplex family suite","duplex family suite (1 double 1 twin)","duplex family suite with mezzanine","duplex family suite with mezzanine and 2 bedrooms","duplex suite","duplex twin family suite","duplex, family","duplex, family suite","duplex, family suite, twin beds","duplex, suite","family duplex","family duplex - breakfast for adults only","family duplex 2 bedrooms (mezzanine)","family duplex bed not specified- non refundable","family duplex suite","family duplex suite-parking welcome drink coffee and tea free wifi","family room","family room - pool view","family room duplex","family room family suite duplex","family room pool","family room pool view","family suite","family suite (welcome drink)","family suite - duplex","family suite 2 bedrooms (duplex - mezzanine)","family suite 2 bedrooms (duplex - mezzanine) (1 double or 1 twin"],"enc_n":80,"site":null},{"hotel":"Hotel City Star","kind":"double vs twin","a":"executive double room, 1 double bed","b":"executive, twin beds","enc":["executive double room, 1 double bed","executive, twin beds"],"enc_n":2,"site":null},{"hotel":"Bintang Bali Resort","kind":"king vs twin","a":"deluxe room only (1 king bed)","b":"deluxe room only 2 twin beds","enc":["de luxe","deluxe","deluxe (1 double bed or 2 twin beds)","deluxe breakfast non refundable","deluxe double or twin room","deluxe double or twin room with free benefit","deluxe room non refundable(dbl)","deluxe room only","deluxe room only (1 king bed)","deluxe room only , 1 king bed","deluxe room only 1 king bed","deluxe room only 1 king bed- non refundable","deluxe room only 2 twin beds","deluxe room only 2 twin beds- non refundable","deluxe room only flexible","deluxe room only flexible twin","deluxe room only non refundable","deluxe room only non refundable twin","deluxe room only twin","deluxe room only, 1 king bed","deluxe room only, 1-king bed(s)","deluxe room only, 2 twin bed","deluxe room only,1 king bed","double room","double room deluxe one bed","double room one bed","habitación deluxe (room only) (1 cama de matrimonio grande) - package rate","room assigned on arrival","room assigned on arrival, 1 double or 2 single (double or twin)","room deluxe (1 king bed)","room deluxe non refundable(dbl)","room deluxe(dbl)","standard room"],"enc_n":33,"site":null},{"hotel":"Shangri-La The Marina, Cairns","kind":"queen vs twin","a":",1 x executive marina view twin","b":"executive 2 queen room (marina view)","enc":[",1 x executive marina view twin","executive 2 queen room (marina view)","executive double room marina view (twin beds)","executive marina twin room","executive marina view twin","executive marina view twin (2 queen beds)","executive marina view twin , 2 queen beds","executive marina view twin room","executive marina view twin, 2 queen bed","executive marina view twin, 2-queen bed(s)","executive marina view twin,2 queen beds","executive room with 2 queen beds and marina view","executive twin room","executive twin room (marina view)","executive twin room with marina view","executive twin room with marina view 2 queen beds","executive twin room with marina view, 2 queen bed","executive twin room with marina view,2 queen beds","executive, 2 queen beds, marina view","executive, 2 queen, marina view","executive, twin beds, marina view","executive, twin beds, with view","marina, executive, twin beds","room with 2 beds, executive, marina view","twin executive","twin executive marina view twin room","twin room - executive - marina view","twin room executive - marina view","twin room executive - two double beds - marina view","twin/double room - executive"],"enc_n":30,"site":null},{"hotel":"Centara Anda Dhevi Resort & Spa Krabi","kind":"double vs twin","a":"deluxe 2 double room with pool access","b":"deluxe, twin beds, pool access","enc":["deluxe 2 double room with pool access","deluxe double room pool access","deluxe pool access double","deluxe pool access double double","deluxe pool access double double - deluxe room - king or double - 42 sq mtr attached balcony - excellent pool access","deluxe pool access two double","deluxe pool access two double room","deluxe room 2 double beds pool access","deluxe room 2 double beds pool access (2 double)","deluxe room with 2 double beds and pool access","deluxe room, 2 double beds, pool access","deluxe room, 2 double beds, pool access, 2 double bed","deluxe, 2 double beds, pool access","deluxe, 2 double, pool access","deluxe, double bed, near the pool","deluxe, double bed, pool access","deluxe, twin beds, pool access","double room swimming pool view balcony or terrace swimming pool access 2 beds","double/double - de luxe - pool access","double/twin room deluxe with pool access","room, deluxe, double bed, by the pool","twin deluxe pool access double double","twin deluxe pool access double double (2 double)","twin room - de luxe - pool access","twin/double room - de luxe - pool access"],"enc_n":25,"site":null},{"hotel":"Marina Express - Fisherman, Aonang Beach","kind":"double vs twin","a":"deluxe room (cliff view) 1 double bed","b":"deluxe room (cliff view), 2 twin bed","enc":["cliff view (deluxe room)","deluxe cliff view","deluxe room (cliff view)","deluxe room (cliff view) 1 double bed","deluxe room (cliff view) 1 double bed- non refundable","deluxe room (cliff view), 1 double bed","deluxe room (cliff view), 2 twin bed","deluxe room (cliff view),1 double bed","deluxe room (cliff view),2 twin beds","deluxe, cliff view","deluxe, double bed, cliff view","deluxe, twin beds, cliff view","double room deluxe with views","room deluxe with views","twin deluxe with views","twin/double room - de luxe - cliff view"],"enc_n":16,"site":null},{"hotel":"Amsterdam Teleport Hotel","kind":"queen vs twin","a":"studio, queen bed","b":"studio, twin beds","enc":["mixed dorm, 6 people","party, studio, 2 bunk beds","studio","studio, 3 bunk beds, external bathroom","studio, 4 bunk beds","studio, external bathroom","studio, queen bed","studio, twin beds","studio, twin beds, bunk bed, external bathroom"],"enc_n":9,"site":null},{"hotel":"Travancore Court","kind":"king vs queen","a":"deluxe king room","b":"deluxe queen room","enc":["deluxe king room","deluxe queen room","deluxe queen room with view","deluxe room","double room queen bed - de luxe"],"enc_n":5,"site":null},{"hotel":"Heritage Village Resort & Spa Manesar","kind":"king vs twin","a":"heritage superior king","b":"heritage superior room 2 twin beds","enc":["double superior king bed","heritage superior","heritage superior king","heritage superior king room","heritage superior room","heritage superior room 1 king bed","heritage superior room 2 twin beds","heritage superior room, 1 king bed","heritage superior room, 2 twin bed","heritage superior room,1 king bed","heritage superior room,2 twin beds","heritage superior, 2 twin","heritage, superior","superior double or twin room","superior double room","superior double room (twin beds) (bed type is subject to availability)","superior king room","superior room","twin superior"],"enc_n":19,"site":null},{"hotel":"Tivoli Oriente Lisboa Hotel","kind":"double vs twin","a":"deluxe room (view extra bed 3 adults) 2 twin beds and 1 twin sofa bed","b":"deluxe room (view extra bed 3 adults), 1 double bed,1 sofa bed","enc":["deluxe room (view extra bed 3 adults)","deluxe room (view extra bed 3 adults) 1 double bed and 1 twin sofa bed","deluxe room (view extra bed 3 adults) 1 double bed and 1 twin sofa bed- non refundable","deluxe room (view extra bed 3 adults) 2 twin beds and 1 twin sofa bed","deluxe room (view extra bed 3 adults) 2 twin beds and 1 twin sofa bed- non refundable","deluxe room (view extra bed 3 adults), 1 double bed,1 sofa bed","deluxe room (view extra bed 3 adults), 2 twin bed,1 sofa bed","deluxe room view extra bed 3 adults 1 double bed and 1 twin sofa bed2 twin beds and 1 twin sofa bed","deluxe room with view with extra bed (3ad)","deluxe with view 3ad","deluxe, with extra bed, with view"],"enc_n":11,"site":null},{"hotel":"Tivoli Oriente Lisboa Hotel","kind":"double vs twin","a":"deluxe room (extra bed 3 adults) 2 twin beds and 1 twin sofa bed","b":"deluxe room (extra bed 3 adults), 1 double bed,1 sofa bed","enc":["deluxe room (extra bed 3 adults)","deluxe room (extra bed 3 adults) 1 double bed and 1 twin sofa bed","deluxe room (extra bed 3 adults) 1 double bed and 1 twin sofa bed- non refundable","deluxe room (extra bed 3 adults) 2 twin beds and 1 twin sofa bed","deluxe room (extra bed 3 adults) 2 twin beds and 1 twin sofa bed- non refundable","deluxe room (extra bed 3 adults), 1 double bed,1 sofa bed","deluxe room (extra bed 3 adults), 2 twin bed,1 sofa bed","deluxe room 3ad","deluxe room extra bed 3 adults 1 double bed and 1 twin sofa bed2 twin beds and 1 twin sofa bed","deluxe room with extra bed","deluxe room with extra bed (3ad)","deluxe, double bed, with extra bed"],"enc_n":12,"site":null},{"hotel":"La Petite Salil Sukhumvit 11","kind":"double vs twin","a":"superior, double bed","b":"superior, twin beds","enc":["superior","superior double or twin room","superior room","superior, double bed","superior, double or twin bed","superior, twin beds"],"enc_n":6,"site":null},{"hotel":"Anantara Siam Bangkok Hotel","kind":"double vs twin","a":"deluxe room , 2 twin beds","b":"deluxe, 2 double beds","enc":["deluxe","deluxe double room (twin beds) (bed type is subject to availability)","deluxe room","deluxe room , 2 twin beds","deluxe, 2 beds","deluxe, 2 double beds","deluxe, 2 twin","deluxe, double bed","deluxe, double or twin bed","deluxe, king","deluxe, king bed","deluxe, single","deluxe, twin beds","double or twin room deluxe"],"enc_n":14,"site":null},{"hotel":"Premier Inn Dubai Al Jaddaf","kind":"double vs twin","a":"room, double bed","b":"room, twin beds","enc":["double standard","non-smoking - double room","non-smoking - twin room","room, double bed","room, double bed, smoking","room, twin beds","room, twin beds, smoking","smoking - double room","smoking - twin room","twin room - non smoking","twin smoking"],"enc_n":11,"site":null}]}</script>
+<script>
+const D = JSON.parse(document.getElementById("data").textContent);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const BED = /\b(king|queen|twin|double|single)\b/gi;
+const hl = s => esc(s).replace(BED, m => `<mark>${m}</mark>`);
+const kinds = ["All", ...Array.from(new Set(D.cases.map(c => c.kind))).sort()];
+let filter = "All";
+function card(c) {
+  const others = c.enc.filter(n => n !== c.a && n !== c.b);
+  const more = c.enc_n - 2;
+  return `<article class="case">
+    <div class="case-head"><h2>${esc(c.hotel)}</h2><span class="tag">${esc(c.kind)}</span></div>
+    ${c.site ? `<div class="site">The hotel's own website lists these as two rooms: ${esc(c.site[0])} and ${esc(c.site[1])}.</div>` : ""}
+    <div class="vs">
+      <div class="box bad">
+        <div class="say"><span class="icon" aria-hidden="true">&#x2715;</span><span>Encoder + picker: <b>same row</b></span></div>
+        <div class="row"><div class="name">${hl(c.a)}</div><div class="name">${hl(c.b)}</div></div>
+        ${more > 0 ? `<details><summary>${more} other ${more === 1 ? "name" : "names"} in this row</summary><ul>${others.map(n => `<li>${hl(n)}</li>`).join("")}${c.enc_n > c.enc.length ? `<li>and ${c.enc_n - c.enc.length} more</li>` : ""}</ul></details>` : ""}
+      </div>
+      <div class="box good">
+        <div class="say"><span class="icon" aria-hidden="true">&#x2713;</span><span>Plexe mapper: <b>separate rows</b></span></div>
+        <div class="row"><div class="row-label">Row 1</div><div class="name">${hl(c.a)}</div></div>
+        <div class="row"><div class="row-label">Row 2</div><div class="name">${hl(c.b)}</div></div>
+      </div>
+    </div></article>`;
+}
+function render() {
+  document.getElementById("chips").innerHTML = kinds.map(k => `<button type="button" aria-pressed="${k === filter}" data-k="${esc(k)}">${esc(k === "All" ? "All cases" : k)}</button>`).join("");
+  document.getElementById("cases").innerHTML = D.cases.filter(c => filter === "All" || c.kind === filter).map(card).join("");
+}
+document.getElementById("chips").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { filter = b.dataset.k; render(); } });
+render();
+</script>
+</body>
+</html>
